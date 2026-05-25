@@ -152,7 +152,9 @@ Tracked in README roadmap. The three blockers specifically are:
 - Releases are cut via `gh release create vX.Y.Z --generate-notes` — HACS
   installs the latest tagged release (not `main`), so a new tag is required
   for users to pick up changes
-- Brand assets PR: <https://github.com/home-assistant/brands/pull/10370>
-  (icon + dark_icon 256×256, logo + dark_logo 256×67, under
-  `custom_integrations/aseko_cloud/`). Once merged, remove `ignore: brands`
-  from `.github/workflows/validate.yml`.
+- Brand assets ship **inside the integration** at
+  `custom_components/aseko_cloud/brand/{icon,dark_icon,logo,dark_logo}.png`
+  (HA 2026.3+ convention — `home-assistant/brands` no longer accepts custom
+  integration brands; see
+  <https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api>).
+  These take priority over the brands CDN automatically.

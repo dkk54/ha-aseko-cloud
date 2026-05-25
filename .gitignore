@@ -1,0 +1,9 @@
+.venv/
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# Local Claude Code settings (may contain credentials, never commit)
+.claude/settings.local.json

@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest a new feature or improvement.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+  - type: input
+    id: api-field
+    attributes:
+      label: Related integrator-API field (if applicable)
+      description: Field name in the `StatusValues` schema, if this is about exposing more data.
+      placeholder: "e.g. filtrationSpeed"

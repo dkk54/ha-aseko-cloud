@@ -1,0 +1,49 @@
+name: Bug report
+description: Something isn't working in the Aseko Cloud integration.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill this out. The more detail you provide,
+        the faster we can help.
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.5.0"
+    validations:
+      required: true
+  - type: input
+    id: integration-version
+    attributes:
+      label: Aseko Cloud version
+      description: From HACS, or `manifest.json` `version`.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: unit-model
+    attributes:
+      label: Aseko unit model
+      placeholder: "ASIN AQUA Pro / Salt / Oxygen / Profi / ..."
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you see instead?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      description: Settings → System → Logs — filter for `aseko_cloud`.
+      render: shell
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics (optional)
+      description: |
+        Settings → Devices & Services → Aseko Cloud → ⋮ → Download diagnostics.
+        Paste or attach the JSON here.

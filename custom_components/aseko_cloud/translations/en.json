@@ -1,0 +1,97 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Aseko Cloud",
+        "description": "Create an API key at {url} and paste it below.",
+        "data": { "api_key": "API key" }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate with Aseko",
+        "description": "Your Aseko API key is no longer valid. Generate a new one at {url}.",
+        "data": { "api_key": "API key" }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Aseko",
+      "invalid_auth": "The API key is invalid",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This API key is already configured",
+      "reauth_successful": "Re-authentication was successful"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "water_temperature": { "name": "Water temperature" },
+      "air_temperature": { "name": "Air temperature" },
+      "solar_temperature": { "name": "Solar temperature" },
+      "water_temperature_required": { "name": "Required water temperature" },
+      "ph": { "name": "pH" },
+      "ph_required": { "name": "Required pH" },
+      "redox": { "name": "Redox" },
+      "redox_required": { "name": "Required redox" },
+      "cl_free": { "name": "Free chlorine" },
+      "cl_bounded": { "name": "Combined chlorine" },
+      "cl_free_required": { "name": "Required free chlorine" },
+      "salinity": { "name": "Salinity" },
+      "electrode_power": { "name": "Electrode power" },
+      "filter_flow_speed": { "name": "Filter flow" },
+      "filter_pressure": { "name": "Filter pressure" },
+      "water_level": { "name": "Water level" },
+      "mode": {
+        "name": "Mode",
+        "state": {
+          "auto": "Auto",
+          "eco": "Eco",
+          "off": "Off",
+          "on": "On",
+          "party": "Party",
+          "winter": "Winter"
+        }
+      },
+      "filtration_speed": {
+        "name": "Filtration speed",
+        "state": {
+          "boost": "Boost",
+          "high": "High",
+          "low": "Low",
+          "medium": "Medium",
+          "off": "Off"
+        }
+      },
+      "pool_flow": {
+        "name": "Pool flow",
+        "state": { "overflow": "Overflow", "bottom": "Bottom" }
+      },
+      "water_level_state": {
+        "name": "Water level state",
+        "state": {
+          "ok": "OK",
+          "filling": "Filling",
+          "low": "Low",
+          "high": "High"
+        }
+      },
+      "electrolyzer_direction": {
+        "name": "Electrolyzer direction",
+        "state": {
+          "left": "Left",
+          "right": "Right",
+          "waiting": "Waiting"
+        }
+      }
+    },
+    "binary_sensor": {
+      "online": { "name": "Connectivity" },
+      "problem": { "name": "Problem" },
+      "filtration": { "name": "Filtration" },
+      "heating": { "name": "Heating" },
+      "solar": { "name": "Solar" },
+      "electrolyzer": { "name": "Electrolyzer" },
+      "water_filling": { "name": "Water filling" },
+      "water_flow_to_probes": { "name": "Water flow to probes" }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "entity": {
+    "sensor": {
+      "ph": { "default": "mdi:ph" },
+      "ph_required": { "default": "mdi:ph" },
+      "cl_free": { "default": "mdi:water-percent" },
+      "cl_bounded": { "default": "mdi:water-percent" },
+      "cl_free_required": { "default": "mdi:water-percent" },
+      "salinity": { "default": "mdi:shaker-outline" },
+      "electrode_power": { "default": "mdi:flash" },
+      "water_level": { "default": "mdi:waves" },
+      "mode": { "default": "mdi:tune" },
+      "filtration_speed": { "default": "mdi:speedometer" },
+      "pool_flow": { "default": "mdi:swap-vertical" },
+      "water_level_state": { "default": "mdi:waves-arrow-up" },
+      "electrolyzer_direction": { "default": "mdi:swap-horizontal" }
+    },
+    "binary_sensor": {
+      "heating": { "default": "mdi:radiator" },
+      "solar": { "default": "mdi:solar-power" },
+      "electrolyzer": { "default": "mdi:flash-outline" },
+      "water_filling": { "default": "mdi:water-plus" },
+      "water_flow_to_probes": { "default": "mdi:waves-arrow-right" }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Aseko integrator API documentation
+    url: https://api.aseko.cloud/api/v1/docs
+    about: The official Aseko API this integration is built on.
+  - name: Generate an Aseko API key
+    url: https://account.aseko.cloud/profile/settings/api-keys
+    about: Where to create the API key used during setup.
+  - name: Home Assistant Community
+    url: https://community.home-assistant.io/
+    about: General Home Assistant questions (not specific to this integration).

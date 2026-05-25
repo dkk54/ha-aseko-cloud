@@ -1,0 +1,97 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Aseko Cloud",
+        "description": "Vytvořte si API klíč na {url} a vložte jej níže.",
+        "data": { "api_key": "API klíč" }
+      },
+      "reauth_confirm": {
+        "title": "Opětovné ověření u Aseko",
+        "description": "Váš API klíč Aseko již není platný. Vytvořte si nový na {url}.",
+        "data": { "api_key": "API klíč" }
+      }
+    },
+    "error": {
+      "cannot_connect": "Připojení k Aseko se nezdařilo",
+      "invalid_auth": "API klíč je neplatný",
+      "unknown": "Neočekávaná chyba"
+    },
+    "abort": {
+      "already_configured": "Tento API klíč je již nakonfigurován",
+      "reauth_successful": "Opětovné ověření proběhlo úspěšně"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "water_temperature": { "name": "Teplota vody" },
+      "air_temperature": { "name": "Teplota vzduchu" },
+      "solar_temperature": { "name": "Teplota soláru" },
+      "water_temperature_required": { "name": "Požadovaná teplota vody" },
+      "ph": { "name": "pH" },
+      "ph_required": { "name": "Požadované pH" },
+      "redox": { "name": "Redox" },
+      "redox_required": { "name": "Požadovaný redox" },
+      "cl_free": { "name": "Volný chlor" },
+      "cl_bounded": { "name": "Vázaný chlor" },
+      "cl_free_required": { "name": "Požadovaný volný chlor" },
+      "salinity": { "name": "Salinita" },
+      "electrode_power": { "name": "Výkon elektrody" },
+      "filter_flow_speed": { "name": "Průtok filtrace" },
+      "filter_pressure": { "name": "Tlak filtrace" },
+      "water_level": { "name": "Hladina vody" },
+      "mode": {
+        "name": "Režim",
+        "state": {
+          "auto": "Automatický",
+          "eco": "Eko",
+          "off": "Vypnuto",
+          "on": "Zapnuto",
+          "party": "Párty",
+          "winter": "Zimní"
+        }
+      },
+      "filtration_speed": {
+        "name": "Rychlost filtrace",
+        "state": {
+          "boost": "Boost",
+          "high": "Vysoká",
+          "low": "Nízká",
+          "medium": "Střední",
+          "off": "Vypnuto"
+        }
+      },
+      "pool_flow": {
+        "name": "Průtok bazénem",
+        "state": { "overflow": "Přepad", "bottom": "Dno" }
+      },
+      "water_level_state": {
+        "name": "Stav hladiny vody",
+        "state": {
+          "ok": "V pořádku",
+          "filling": "Napouštění",
+          "low": "Nízká",
+          "high": "Vysoká"
+        }
+      },
+      "electrolyzer_direction": {
+        "name": "Směr elektrolyzéru",
+        "state": {
+          "left": "Vlevo",
+          "right": "Vpravo",
+          "waiting": "Čekání"
+        }
+      }
+    },
+    "binary_sensor": {
+      "online": { "name": "Připojení" },
+      "problem": { "name": "Problém" },
+      "filtration": { "name": "Filtrace" },
+      "heating": { "name": "Ohřev" },
+      "solar": { "name": "Solár" },
+      "electrolyzer": { "name": "Elektrolyzér" },
+      "water_filling": { "name": "Napouštění vody" },
+      "water_flow_to_probes": { "name": "Průtok vody k sondám" }
+    }
+  }
+}

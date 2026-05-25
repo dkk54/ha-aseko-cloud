@@ -24,3 +24,8 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
+          # Ignore the brands check until the home-assistant/brands PR is
+          # merged (requires Aseko PNGs at
+          # custom_integrations/aseko_cloud/{icon,logo}.png). Remove this line
+          # once the PR lands.
+          ignore: brands

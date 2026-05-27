@@ -71,6 +71,12 @@ Non-obvious things that span multiple files:
   `async_forward_entry_setups`. Without it HA logs a blocking-event-loop
   warning for custom integrations. Do not remove the `asyncio.gather(...)` at
   the top of `async_setup_entry`.
+- **API keys expire.** `/auth/check` returns `expiresAt`; an expired key
+  produces HTTP 401 with `errorType: API_KEY_EXPIRED`. The coordinator catches
+  the resulting `AsekoAuthError` and raises `ConfigEntryAuthFailed`, which
+  triggers HA's reauth dialog. Validated in practice — the initial test key
+  expired and the reauth path fired correctly. If a user reports "stopped
+  working", check key expiry first.
 
 ## Translations and entity IDs
 
@@ -94,7 +100,7 @@ chat history assumes Czech IDs. The internal `translation_key` (e.g.
 | Add a metric the API already returns | `STATUS_SENSORS` in `sensor.py` (matching `api_field` from `StatusValues` schema) + entry in all 3 translation files |
 | Add a boolean state | `BINARY_SENSORS` in `binary_sensor.py` (with `_status_value(...)`, `_has_status_value(...)`) + translations |
 | Rename / restructure an API field | only `api.py` plus the `api_field=` strings in sensor.py / binary_sensor.py |
-| Promote staging URL → production | `STAGING` toggle and URL constants in `const.py` — but for the integrator API there is currently *only* production; staging URLs there are placeholders |
+| Cut a new release | bump three things together: `manifest.json` `version`, `const.CLIENT_VERSION`, the git tag (`gh release create vX.Y.Z --generate-notes`). HACS installs the latest tag — `main` alone won't reach users. |
 
 ## Local testing
 
@@ -142,19 +148,31 @@ Tracked in README roadmap. The three blockers specifically are:
 2. A test suite under `tests/components/aseko_cloud/` mocking `aiohttp`.
 3. Config-entry diagnostics (`diagnostics.py`).
 
-## Repository & releases
+## Repository & distribution
 
 - Repo: <https://github.com/dkk54/ha-aseko-cloud>
 - License: Apache-2.0
 - `codeowners` in `manifest.json`: `@dkk54`
+- Latest release: **v0.1.1** — also pinned in `manifest.json` `version` and
+  `const.CLIENT_VERSION` (sent in `X-Client-Version` header). Keep all three in
+  sync on every release.
 - HACS + hassfest validation runs in `.github/workflows/validate.yml` on every
-  push / PR and nightly
-- Releases are cut via `gh release create vX.Y.Z --generate-notes` — HACS
-  installs the latest tagged release (not `main`), so a new tag is required
-  for users to pick up changes
+  push / PR and nightly. Nightly is the early-warning canary for upstream
+  HA or HACS changes that break our manifest.
 - Brand assets ship **inside the integration** at
   `custom_components/aseko_cloud/brand/{icon,dark_icon,logo,dark_logo}.png`
   (HA 2026.3+ convention — `home-assistant/brands` no longer accepts custom
   integration brands; see
   <https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api>).
   These take priority over the brands CDN automatically.
+
+### How users install it today
+
+| Path | Available |
+|---|---|
+| **HACS default catalog** (search "Aseko Cloud" in HACS) | ⏳ pending <https://github.com/hacs/default/pull/7991> — all 11 automated checks ✅, waiting for a human HACS maintainer review. HACS docs say "reviews take months." Don't nudge before ~4–6 weeks of silence. |
+| **HACS custom repository** (paste the repo URL) | ✅ works today |
+| **Manual** (copy `custom_components/aseko_cloud/` into HA `config/`) | ✅ works today |
+
+The default-catalog merge only adds *discoverability* — anyone willing to add
+a custom repository can install today.

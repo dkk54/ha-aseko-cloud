@@ -136,7 +136,32 @@ python3 -c "import json; print(json.load(open('$HOME/ha-test-config/.storage/cor
 ```
 
 The blocking Docker container is named `homeassistant`. Config persists in
-`~/ha-test-config/` even after `docker rm -f homeassistant`.
+n`~/ha-test-config/` even after `docker rm -f homeassistant`. **HACS 2.0.5 is
+installed in this test instance** (real dir at
+`~/ha-test-config/custom_components/hacs`, not a mount) so the HACS install flow
+can be reproduced locally; `aseko_cloud` is the live mount.
+
+### Headless verification (no browser)
+
+You can confirm the integration is registered server-side without clicking
+through the UI. Mint a short-lived access token from the stored refresh token
+(HA signs access JWTs HS256 with the refresh token's `jwt_key`, payload
+`{iss: <refresh_token_id>, iat, exp}`), reading `~/ha-test-config/.storage/auth`:
+
+- **Pick an *owner* user's `normal` refresh token** — the config-entries flow
+  API is admin-only, so a `system` token (e.g. "Home Assistant Content")
+  returns `401` even though `GET /api/` works with it.
+- **Is the config flow registered / functional?**
+  `POST /api/config/config_entries/flow` with `{"handler":"aseko_cloud"}` — a
+  registered flow returns a `type:"form"` with the `api_key` field; an unknown
+  handler errors. (This leaves an in-progress flow that creates *no* config
+  entry and is discarded — safe.)
+- **Is it in the Add-Integration picker list?** Connect to
+  `ws://localhost:8123/api/websocket` (auth handshake, then `manifest/list`) and
+  check for `domain=aseko_cloud, config_flow=True, is_built_in=False`. Use the
+  repo's `.venv/bin/python` (has `aiohttp`). `manifest/list` only returns
+  loaded/scanned integrations, so the core `aseko_pool_live` may be absent — that
+  does not affect ours.
 
 ## Things HA reviewers will check before core submission
 
@@ -176,3 +201,26 @@ Tracked in README roadmap. The three blockers specifically are:
 
 The default-catalog merge only adds *discoverability* — anyone willing to add
 a custom repository can install today.
+
+### Common install confusion (support triage)
+
+A custom integration appears in HA's **Add Integration** picker **only after its
+files are on disk in `config/custom_components/` and HA has been restarted** —
+the picker does not download custom integrations. So the usual support chain is:
+
+1. *"Can only use HACS integrations / can't find it in HACS"* → it is **not in
+   the HACS default store yet** (PR #7991 pending). Direct users to **HACS → ⋮ →
+   Custom repositories**, URL `https://github.com/dkk54/ha-aseko-cloud`, type
+   **Integration**, then download → **restart** → Add Integration. (Or copy the
+   folder in manually.) This is the #1 user report and is **not a bug**.
+2. *"Installed it but it's not in Add Integration"* → they skipped the
+   **restart**, or it's a stale **frontend cache** — a hard refresh
+   (Cmd/Ctrl+Shift+R) or a private window fixes it. Verified the picker shows
+   *zero* even for the core `aseko_pool_live` when the cache is stale.
+3. Czech UI: *Nastavení → Zařízení a služby → Přidat integraci*; the entity to
+   pick is **Aseko Cloud** (custom badge, asks for an **API key**) — **not**
+   "Aseko Pool" (core `aseko_pool_live`, asks for email/password).
+
+The server side being correct is provable headlessly (see *Headless
+verification* under Local testing) — reach for that before assuming an
+integration bug when a user "can't find" it.

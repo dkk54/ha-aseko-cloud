@@ -49,13 +49,36 @@ hacs.json            HACS metadata
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dkk54&repository=ha-aseko-cloud&category=integration)
 
-1. In Home Assistant, open **HACS** (or click the badge above).
-2. Add `https://github.com/dkk54/ha-aseko-cloud` as a custom repository,
-   category **Integration**.
-3. Install **Aseko Cloud** and restart Home Assistant.
-4. **Settings → Devices & Services → Add Integration → Aseko Cloud**.
-5. Paste an API key generated at
+> **Aseko Cloud is not in the HACS default store yet**
+> ([pending review](https://github.com/hacs/default/pull/7991)), so for now you
+> add it as a **custom repository**. The one-click badge above does this for you;
+> the manual steps are below. Once the review merges, you'll be able to find it
+> directly in HACS without step 2.
+
+**Prerequisite:** [HACS](https://hacs.xyz) must already be installed.
+
+1. In Home Assistant, open **HACS** in the sidebar.
+2. **Add the custom repository:** click the **⋮** menu (top-right) →
+   **Custom repositories**, then enter:
+   - **Repository:** `https://github.com/dkk54/ha-aseko-cloud`
+   - **Type / Category:** **Integration**
+
+   Click **Add**. (Or just click the badge above, which fills this in.)
+3. **Download:** search **Aseko Cloud** in HACS, open it, and click
+   **Download**.
+4. **Restart Home Assistant** — *required*. The integration only appears in the
+   next step after a restart.
+5. **Settings → Devices & Services → Add Integration**, search **Aseko Cloud**
+   and select it. It carries the *custom integration* badge and asks for an
+   **API key** — not "Aseko Pool" (the separate core integration, which asks for
+   email/password).
+6. Paste an API key generated at
    <https://account.aseko.cloud/profile/settings/api-keys>.
+
+> **"Aseko Cloud" doesn't show up in step 5?** Make sure you restarted (step 4).
+> If it's still missing, it's a stale browser cache: hard-refresh the page
+> (**Ctrl/Cmd + Shift + R**) or open Home Assistant in a private window, then
+> search again.
 
 ### Manual
 

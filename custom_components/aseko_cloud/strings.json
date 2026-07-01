@@ -22,6 +22,22 @@
       "reauth_successful": "Re-authentication was successful"
     }
   },
+  "issues": {
+    "access_blocked": {
+      "title": "Aseko: {error}",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Action required in your Aseko account",
+            "description": "{error}\n\nYour API key is still valid. Resolve this in your Aseko account at {url}, then select **Submit** to refresh. The integration also recovers on its own within a few minutes."
+          }
+        },
+        "abort": {
+          "still_blocked": "The problem is not resolved yet. Fix it in your Aseko account and try again."
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "water_temperature": { "name": "Water temperature" },

@@ -15,6 +15,9 @@ API_BASE_URL = "https://api.aseko.cloud/api/v1"
 # Where users generate an API key for the integration.
 API_KEYS_URL = "https://account.aseko.cloud/profile/settings/api-keys"
 
+# Account portal where users accept the latest Terms of Service.
+ACCOUNT_URL = "https://account.aseko.cloud/"
+
 # Sent on every request to identify the client (X-Client-Name / X-Client-Version).
 CLIENT_NAME = "home_assistant"
 CLIENT_VERSION = "0.1.1"

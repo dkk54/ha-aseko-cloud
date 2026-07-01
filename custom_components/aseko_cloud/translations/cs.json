@@ -15,11 +15,28 @@
     "error": {
       "cannot_connect": "Připojení k Aseko se nezdařilo",
       "invalid_auth": "API klíč je neplatný",
+      "access_blocked": "{error}",
       "unknown": "Neočekávaná chyba"
     },
     "abort": {
       "already_configured": "Tento API klíč je již nakonfigurován",
       "reauth_successful": "Opětovné ověření proběhlo úspěšně"
+    }
+  },
+  "issues": {
+    "access_blocked": {
+      "title": "Aseko: {error}",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Vyžadována akce ve vašem Aseko účtu",
+            "description": "{error}\n\nVáš API klíč je stále platný. Vyřešte to ve svém Aseko účtu na {url} a poté klikněte na **Odeslat** pro obnovení. Integrace se do několika minut obnoví i sama."
+          }
+        },
+        "abort": {
+          "still_blocked": "Problém stále není vyřešen. Vyřešte ho ve svém Aseko účtu a zkuste to znovu."
+        }
+      }
     }
   },
   "entity": {

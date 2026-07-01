@@ -17,7 +17,12 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
-from .api import AsekoAuthError, AsekoCloudApi, AsekoCloudError
+from .api import (
+    AsekoAccessBlockedError,
+    AsekoAuthError,
+    AsekoCloudApi,
+    AsekoCloudError,
+)
 from .const import API_KEYS_URL, DOMAIN, LOGGER
 
 STEP_API_KEY_SCHEMA = vol.Schema(
@@ -44,10 +49,13 @@ class AsekoCloudConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Ask for an API key and validate it."""
         errors: dict[str, str] = {}
+        placeholders: dict[str, str] = {"url": API_KEYS_URL}
         if user_input is not None:
-            error = await self._async_validate(user_input[CONF_API_KEY])
+            error, message = await self._async_validate(user_input[CONF_API_KEY])
             if error:
                 errors["base"] = error
+                if message:
+                    placeholders["error"] = message
             else:
                 await self.async_set_unique_id(_api_key_id(user_input[CONF_API_KEY]))
                 self._abort_if_unique_id_configured()
@@ -56,7 +64,7 @@ class AsekoCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=STEP_API_KEY_SCHEMA,
             errors=errors,
-            description_placeholders={"url": API_KEYS_URL},
+            description_placeholders=placeholders,
         )
 
     async def async_step_reauth(
@@ -70,10 +78,13 @@ class AsekoCloudConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Collect a fresh API key and update the existing entry."""
         errors: dict[str, str] = {}
+        placeholders: dict[str, str] = {"url": API_KEYS_URL}
         if user_input is not None:
-            error = await self._async_validate(user_input[CONF_API_KEY])
+            error, message = await self._async_validate(user_input[CONF_API_KEY])
             if error:
                 errors["base"] = error
+                if message:
+                    placeholders["error"] = message
             else:
                 return self.async_update_reload_and_abort(
                     self._get_reauth_entry(), data=user_input
@@ -82,11 +93,18 @@ class AsekoCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="reauth_confirm",
             data_schema=STEP_API_KEY_SCHEMA,
             errors=errors,
-            description_placeholders={"url": API_KEYS_URL},
+            description_placeholders=placeholders,
         )
 
-    async def _async_validate(self, api_key: str) -> str | None:
-        """Validate an API key against ``/auth/check`` and return an error key."""
+    async def _async_validate(
+        self, api_key: str
+    ) -> tuple[str | None, str | None]:
+        """Validate an API key against ``/auth/check``.
+
+        Returns ``(error_key, message)``. ``message`` is the backend's localised
+        text for the ``access_blocked`` error (so the UI can show the real
+        reason), and ``None`` otherwise.
+        """
         api = AsekoCloudApi(
             async_get_clientsession(self.hass),
             api_key,
@@ -94,11 +112,16 @@ class AsekoCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         )
         try:
             await api.async_check()
+        except AsekoAccessBlockedError as err:
+            # Key is valid; an account condition (unaccepted Terms of Service,
+            # unpaid subscription, ...) blocks it. Show the localised backend
+            # reason rather than the misleading "cannot connect".
+            return "access_blocked", err.message
         except AsekoAuthError:
-            return "invalid_auth"
+            return "invalid_auth", None
         except AsekoCloudError:
-            return "cannot_connect"
+            return "cannot_connect", None
         except Exception:  # noqa: BLE001
             LOGGER.exception("Unexpected error validating Aseko API key")
-            return "unknown"
-        return None
+            return "unknown", None
+        return None, None

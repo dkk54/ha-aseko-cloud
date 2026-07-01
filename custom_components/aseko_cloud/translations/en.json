@@ -15,11 +15,28 @@
     "error": {
       "cannot_connect": "Failed to connect to Aseko",
       "invalid_auth": "The API key is invalid",
+      "access_blocked": "{error}",
       "unknown": "Unexpected error"
     },
     "abort": {
       "already_configured": "This API key is already configured",
       "reauth_successful": "Re-authentication was successful"
+    }
+  },
+  "issues": {
+    "access_blocked": {
+      "title": "Aseko: {error}",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Action required in your Aseko account",
+            "description": "{error}\n\nYour API key is still valid. Resolve this in your Aseko account at {url}, then select **Submit** to refresh. The integration also recovers on its own within a few minutes."
+          }
+        },
+        "abort": {
+          "still_blocked": "The problem is not resolved yet. Fix it in your Aseko account and try again."
+        }
+      }
     }
   },
   "entity": {

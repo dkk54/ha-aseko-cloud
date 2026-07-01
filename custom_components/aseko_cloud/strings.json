@@ -15,6 +15,7 @@
     "error": {
       "cannot_connect": "Failed to connect to Aseko",
       "invalid_auth": "The API key is invalid",
+      "access_blocked": "{error}",
       "unknown": "Unexpected error"
     },
     "abort": {

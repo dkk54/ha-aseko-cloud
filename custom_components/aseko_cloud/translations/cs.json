@@ -15,6 +15,7 @@
     "error": {
       "cannot_connect": "Připojení k Aseko se nezdařilo",
       "invalid_auth": "API klíč je neplatný",
+      "access_blocked": "{error}",
       "unknown": "Neočekávaná chyba"
     },
     "abort": {

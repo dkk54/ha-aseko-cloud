@@ -1,0 +1,4 @@
+# Test dependencies for the Aseko Cloud integration.
+# Pin pytest-homeassistant-custom-component to the release matching the
+# Home Assistant version you target (it pins homeassistant transitively).
+pytest-homeassistant-custom-component

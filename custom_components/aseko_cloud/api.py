@@ -32,6 +32,32 @@ class AsekoAuthError(AsekoCloudError):
     """Raised when the API key is missing, invalid or expired."""
 
 
+# 403 errorTypes that mean "the key is valid, but an account-level condition
+# blocks access" -- the user must resolve it (accept new Terms of Service, pay
+# the subscription, ...). These are transient and recoverable, NOT auth errors.
+RECOVERABLE_403_ERROR_TYPES = frozenset(
+    {"TOS_NOT_ACCEPTED", "UNPAID_OR_LOW_SUBSCRIPTION_PLAN"}
+)
+
+
+class AsekoAccessBlockedError(AsekoCloudError):
+    """Raised when the API key is valid but access is blocked by an account
+    condition the user must resolve (HTTP 403 with a known errorType, e.g.
+    unaccepted Terms of Service or an unpaid/insufficient subscription).
+
+    This is transient and user-recoverable and must NOT be treated as an
+    authentication failure. ``message`` carries the backend's ``error`` string,
+    already localised via the ``Accept-Language`` header, so it can be shown
+    verbatim in the UI. ``error_type`` is the raw ``errorType``.
+    """
+
+    def __init__(self, message: str, error_type: str) -> None:
+        """Store the localised backend message and the raw errorType."""
+        super().__init__(message)
+        self.message = message
+        self.error_type = error_type
+
+
 @dataclass
 class AsekoUnit:
     """An Aseko pool unit returned by ``/paired-units/{serialNumber}``."""
@@ -110,6 +136,15 @@ class AsekoCloudApi:
                 async with self._session.get(
                     f"{API_BASE_URL}{path}", headers=headers, params=params
                 ) as resp:
+                    # A 403 with a known errorType (unaccepted ToS, unpaid
+                    # subscription, ...) means the key is fine but an account
+                    # condition blocks access. Surface the localised backend
+                    # message and keep it distinct from a real auth rejection so
+                    # the integration recovers automatically.
+                    if resp.status == HTTPStatus.FORBIDDEN:
+                        blocked = await _access_blocked_error(resp)
+                        if blocked is not None:
+                            raise AsekoAccessBlockedError(*blocked)
                     if resp.status in (
                         HTTPStatus.UNAUTHORIZED,
                         HTTPStatus.FORBIDDEN,
@@ -119,12 +154,33 @@ class AsekoCloudApi:
                         )
                     resp.raise_for_status()
                     return await resp.json()
-        except AsekoAuthError:
+        except AsekoCloudError:
             raise
         except TimeoutError as err:
             raise AsekoConnectionError("Timed out contacting Aseko") from err
         except aiohttp.ClientError as err:
             raise AsekoConnectionError(str(err)) from err
+
+
+async def _access_blocked_error(
+    resp: aiohttp.ClientResponse,
+) -> tuple[str, str] | None:
+    """Return ``(message, error_type)`` if a 403 is a known recoverable account
+    condition, else ``None`` (so the caller treats it as an auth failure).
+
+    ``message`` is the backend's localised ``error`` text.
+    """
+    try:
+        body = await resp.json()
+    except (aiohttp.ClientError, ValueError):
+        return None
+    if not isinstance(body, dict):
+        return None
+    error_type = body.get("errorType")
+    if error_type not in RECOVERABLE_403_ERROR_TYPES:
+        return None
+    message = body.get("error") or "Access to the Aseko API is blocked"
+    return message, error_type
 
 
 def _parse_unit(data: dict[str, Any]) -> AsekoUnit:

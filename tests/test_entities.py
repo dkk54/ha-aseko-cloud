@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
+from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
@@ -195,3 +196,65 @@ async def test_failed_poll_keeps_devices(
 
     assert dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "SN1")})
     assert _state(hass, "sensor", "SN1_water_temperature") == "unavailable"
+
+
+async def test_unit_photo(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    hass_client: ClientSessionGenerator,
+) -> None:
+    """A unit of a family with a photo shows it, served by Home Assistant."""
+    await _setup(
+        hass,
+        aioclient_mock,
+        [unit_payload(brandName={"primary": "ASIN AQUA", "secondary": "Net+"})],
+    )
+
+    client = await hass_client()
+    response = await client.get(
+        hass.states.get(_entity_id(hass, "image", "SN1_photo")).attributes[
+            "entity_picture"
+        ]
+    )
+    assert response.status == 200
+    assert response.content_type == "image/webp"
+    assert await response.read()
+
+
+async def test_unit_without_photo(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """Units of a family without a photo, or with no family yet, show none."""
+    await _setup(
+        hass,
+        aioclient_mock,
+        [
+            unit_payload("SN1", brandName={"primary": "COVREX", "secondary": "Dosing"}),
+            unit_payload("SN2"),
+        ],
+    )
+
+    for serial in ("SN1", "SN2"):
+        state = hass.states.get(_entity_id(hass, "image", f"{serial}_photo"))
+        assert "entity_picture" not in state.attributes
+
+
+async def test_unit_photo_follows_family(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    hass_client: ClientSessionGenerator,
+) -> None:
+    """The photo appears once a unit reports a family that has one."""
+    entry = await _setup(hass, aioclient_mock, [unit_payload()])
+    entity_id = _entity_id(hass, "image", "SN1_photo")
+
+    await _repoll(
+        hass,
+        aioclient_mock,
+        entry,
+        [unit_payload(brandName={"primary": "ASIN AQUA", "secondary": "Pro"})],
+    )
+
+    client = await hass_client()
+    response = await client.get(hass.states.get(entity_id).attributes["entity_picture"])
+    assert response.status == 200

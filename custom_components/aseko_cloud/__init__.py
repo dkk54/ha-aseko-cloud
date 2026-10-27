@@ -11,7 +11,7 @@ from homeassistant.helpers.importlib import async_import_module
 
 from .coordinator import AsekoCloudCoordinator
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.IMAGE, Platform.SENSOR]
 
 type AsekoCloudConfigEntry = ConfigEntry[AsekoCloudCoordinator]
 

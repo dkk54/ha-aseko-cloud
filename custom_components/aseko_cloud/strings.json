@@ -127,6 +127,9 @@
       "electrolyzer": { "name": "Electrolyzer" },
       "water_filling": { "name": "Water filling" },
       "water_flow_to_probes": { "name": "Water flow to probes" }
+    },
+    "image": {
+      "photo": { "name": "Photo" }
     }
   }
 }

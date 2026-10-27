@@ -78,6 +78,7 @@ class AsekoUnit:
     online: bool
     note: str | None = None
     brand: str | None = None
+    brand_secondary: str | None = None
     # Raw ``statusValues`` object. Fields are already clean and typed; a missing
     # key means the metric is unsupported by this unit.
     status_values: dict[str, Any] = field(default_factory=dict)
@@ -222,6 +223,7 @@ def _parse_unit(data: dict[str, Any], serial_number: str) -> AsekoUnit:
         online=data.get("online", False),
         note=data.get("note"),
         brand=brand.get("primary"),
+        brand_secondary=brand.get("secondary"),
         status_values=data.get("statusValues") or {},
         status_messages=data.get("statusMessages") or [],
     )

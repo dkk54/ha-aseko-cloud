@@ -127,6 +127,9 @@
       "electrolyzer": { "name": "Elektrolyzér" },
       "water_filling": { "name": "Napouštění vody" },
       "water_flow_to_probes": { "name": "Průtok vody k sondám" }
+    },
+    "image": {
+      "photo": { "name": "Fotka" }
     }
   }
 }

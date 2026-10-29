@@ -17,6 +17,18 @@ if (!customElements.get("ll-strategy-dashboard-aseko-pool")) {
   );
 }
 
+// Offered under Settings → Dashboards → Add dashboard.
+window.customStrategies = window.customStrategies || [];
+if (!window.customStrategies.some((strategy) => strategy.type === "aseko-pool")) {
+  window.customStrategies.push({
+    type: "aseko-pool",
+    strategyType: "dashboard",
+    name: "Aseko Pool",
+    description: "Every Aseko pool unit with water quality, filtration and a showcase for a wall tablet.",
+    documentationURL: "https://github.com/dkk54/ha-aseko-cloud#pool-dashboard",
+  });
+}
+
 // If this file still arrived too late, Home Assistant shows a timeout error and
 // never retries, so the page is reloaded once to recover.
 const RELOAD_KEY = "aseko-pool-reloaded-at";

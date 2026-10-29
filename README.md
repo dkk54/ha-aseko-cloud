@@ -20,8 +20,8 @@ built by Aseko on top of the **public integrator API** at
   </tr>
 </table>
 
-The pool dashboard in the screenshots is Aseko's own dashboard and is not
-installed with the integration; the integration provides the entities it shows.
+The pool dashboard in the screenshots comes with the integration; see
+[Pool dashboard](#pool-dashboard).
 
 ## What it does
 
@@ -52,6 +52,8 @@ installed with the integration; the integration provides the entities it shows.
   family without a photo, or not yet online, have none.
 - Warns through a repair issue 14 days before the API key expires; the key can
   be replaced via **Reconfigure** without removing the integration.
+- **Pool dashboard** with every unit of the account, ready to add; see
+  [Pool dashboard](#pool-dashboard).
 - Config-entry diagnostics (API key redacted).
 - Polls every 5 minutes (`cloud_polling`). The integrator API is read-only.
 
@@ -70,6 +72,8 @@ custom_components/aseko_cloud/
   sensor.py          Sensors driven by statusValues fields
   binary_sensor.py   Connectivity / problem / running states
   image.py           Unit photo by product family (photos in images/)
+  frontend/          Pool dashboard (strategy custom:aseko-pool), served by
+                     __init__.py
   strings.json       Translation source
   translations/      en, cs
   icons.json         Entity icons
@@ -155,6 +159,34 @@ Same final steps no matter how you installed:
 > accepts a key from a different account too. Its units then replace the
 > current ones: devices of units missing from the new account are removed.
 > To add a second account, add the integration again instead.
+
+## Pool dashboard
+
+The integration comes with a dashboard made for pools: every unit with its
+photo, water quality against the target values, the filtration schedule,
+equipment, messages and a 48-hour history, plus a full-screen showcase for a
+wall tablet or TV. It finds the units of the account by itself.
+
+1. Go to **Settings → Dashboards → Add dashboard**.
+2. Pick **Aseko Pool** under *Community dashboards*, give it a name (e.g.
+   *Pool*) and click **Create**.
+
+If your Home Assistant does not list *Community dashboards* yet, pick **New
+dashboard from scratch** instead, open the new dashboard, click the pencil
+(**Edit dashboard**) → **⋮ → Raw configuration editor** and replace the
+content with:
+
+```yaml
+strategy:
+  type: custom:aseko-pool
+```
+
+Units paired later appear on the dashboard on their own.
+
+Optional settings under `strategy`: `theme` (a Home Assistant theme for the
+dashboard) and `rotate_seconds` (how long the showcase shows each unit,
+20 by default). The texts follow the Home Assistant language (English and
+Czech; other languages fall back to English).
 
 ## Open items / roadmap
 

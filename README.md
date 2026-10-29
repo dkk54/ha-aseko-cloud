@@ -17,10 +17,6 @@ integration, installed through HACS.
     <td width="50%"><img src="https://raw.githubusercontent.com/dkk54/ha-aseko-cloud/main/docs/images/overview.webp" alt="Several pool units at a glance"></td>
     <td width="50%"><img src="https://raw.githubusercontent.com/dkk54/ha-aseko-cloud/main/docs/images/dashboard-family-pool.webp" alt="A pool unit with air and solar temperature"></td>
   </tr>
-  <tr>
-    <td><img src="https://raw.githubusercontent.com/dkk54/ha-aseko-cloud/main/docs/images/sensors.webp" alt="Sensors of a pool unit in Home Assistant"></td>
-    <td><img src="https://raw.githubusercontent.com/dkk54/ha-aseko-cloud/main/docs/images/setup.webp" alt="Setting up the integration with an Aseko API key"></td>
-  </tr>
 </table>
 
 The pool dashboard in the screenshots comes with the integration; see
@@ -119,6 +115,8 @@ Same final steps no matter how you installed:
 3. Paste your [Aseko API key](#4-get-your-aseko-api-key) and submit. Each paired
    pool unit on the account becomes its own device.
 
+   <img src="https://raw.githubusercontent.com/dkk54/ha-aseko-cloud/main/docs/images/setup.webp" alt="Setting up the integration with an Aseko API key" width="480">
+
 > **"Aseko Cloud" doesn't show up in the picker?** Two usual causes:
 > 1. You didn't **restart** Home Assistant after installing — restart and retry.
 > 2. **Stale browser cache** — hard-refresh the page
@@ -165,6 +163,8 @@ Home Assistant, a unit named *Pool* gets `sensor.pool_ph`,
 `binary_sensor.pool_problem` and so on. Entities appear only for values the
 unit reports. Entities marked *diagnostic* are listed under the device's
 diagnostic section.
+
+<img src="https://raw.githubusercontent.com/dkk54/ha-aseko-cloud/main/docs/images/sensors.webp" alt="Sensors of a pool unit in Home Assistant" width="320">
 
 ### Sensors
 

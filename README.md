@@ -306,4 +306,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Apache-2.0 — see [`LICENSE`](LICENSE).
+The source code is licensed under Apache-2.0 — see [`LICENSE`](LICENSE).
+
+The Aseko name and logo are trademarks of Aseko. The Aseko logo, the product
+photos and the screenshots are owned by Aseko and are not covered by the
+Apache License; see [`NOTICE`](NOTICE).

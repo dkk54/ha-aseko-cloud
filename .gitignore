@@ -5,6 +5,9 @@ __pycache__/
 *.pyo
 .DS_Store
 
-# Local Claude Code settings (may contain credentials, never commit)
+# Local editor settings (may contain credentials, never commit)
 .claude/settings.local.json
 uploads/
+
+# Local development notes, not part of the project
+CLAUDE.md

@@ -10,7 +10,10 @@ Aseko on top of the **public integrator API** at
   <https://account.aseko.cloud/profile/settings/api-keys>.
 - Discovers every paired pool unit on the account; each becomes one device.
   A unit paired later in the Aseko app appears on the next poll without a
-  restart; an unpaired unit's device is removed.
+  restart; an unpaired unit's device is removed. If the account reports no
+  units at all, the devices are kept (shown as unavailable) rather than
+  removed, so a glitch on the Aseko side cannot wipe their names, areas and
+  dashboard references.
 - **Sensors** (created only for fields the unit actually reports):
   - Temperatures (water, air, solar, required water temperature)
   - pH and required pH

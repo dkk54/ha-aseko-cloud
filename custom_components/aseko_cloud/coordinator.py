@@ -132,7 +132,14 @@ class AsekoCloudCoordinator(DataUpdateCoordinator[dict[str, AsekoUnit]]):
         )
 
     def _remove_stale_devices(self, units: dict[str, AsekoUnit]) -> None:
-        """Remove devices of units that are no longer paired with the account."""
+        """Remove devices of units that are no longer paired with the account.
+
+        An empty listing is never taken as every unit being unpaired: a glitch
+        on the Aseko side would otherwise wipe all devices together with their
+        names, areas and dashboard references. The devices stay unavailable.
+        """
+        if not units:
+            return
         device_registry = dr.async_get(self.hass)
         for device in dr.async_entries_for_config_entry(
             device_registry, self.config_entry.entry_id

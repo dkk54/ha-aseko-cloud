@@ -211,6 +211,18 @@ async def test_failed_poll_keeps_devices(
     assert _state(hass, "sensor", "SN1_water_temperature") == "unavailable"
 
 
+async def test_empty_listing_keeps_devices(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """An empty unit listing must not be mistaken for every unit being unpaired."""
+    entry = await _setup(hass, aioclient_mock, [unit_payload()])
+
+    await _repoll(hass, aioclient_mock, entry, [])
+
+    assert _device(hass, "SN1")
+    assert _state(hass, "sensor", "SN1_water_temperature") == "unavailable"
+
+
 async def test_unit_photo(
     hass: HomeAssistant,
     aioclient_mock: AiohttpClientMocker,

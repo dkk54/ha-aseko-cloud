@@ -1,8 +1,11 @@
 # Aseko Cloud — Home Assistant integration
 
-Official Home Assistant integration for Aseko pool units (ASIN AQUA), built by
-Aseko on top of the **public integrator API** at
+Aseko's official integration for Home Assistant, for Aseko pool units
+(ASIN AQUA, ASIN Pool). It is a custom integration installed through HACS and
+built by Aseko on top of the **public integrator API** at
 [`https://api.aseko.cloud/api/v1`](https://api.aseko.cloud/api/v1/docs).
+
+**Requires Home Assistant 2025.3 or newer.**
 
 ## What it does
 
@@ -59,48 +62,38 @@ hacs.json            HACS metadata
 
 ## Installation
 
-There are three ways to install, from easiest to most manual:
+There are two ways to install:
 
 1. **[HACS](#1-via-hacs-recommended)** — recommended; handles updates for you.
-2. **[Manual copy](#2-manual-copy)** — no HACS needed.
-3. **[Manual download (ZIP)](#3-manual-download-zip)** — no HACS, no command line.
+2. **[Manual install](#2-manual-install)** — no HACS needed.
 
-Either way, you'll finish by [adding the integration](#4-add-the-integration-in-home-assistant)
-and pasting an [Aseko API key](#5-get-your-aseko-api-key).
+Either way, you'll finish by [adding the integration](#3-add-the-integration-in-home-assistant)
+and pasting an [Aseko API key](#4-get-your-aseko-api-key).
 
 ### 1. Via HACS (recommended)
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dkk54&repository=ha-aseko-cloud&category=integration)
 
-> **Aseko Cloud is not in the HACS default store yet**
-> ([pending review](https://github.com/hacs/default/pull/7991)), so for now you
-> add it as a **custom repository** (step 2 below). The one-click badge above
-> does this for you. Once the review merges, you'll be able to find it directly
-> in HACS and can skip step 2.
-
 **Don't have HACS yet?** HACS is a separate add-on you install once. Follow the
 official guide at <https://hacs.xyz/docs/use/download/download/>, then restart
 Home Assistant before continuing here.
 
-1. In Home Assistant, open **HACS** in the sidebar.
-2. **Add the custom repository:** click the **⋮** menu (top-right) →
-   **Custom repositories**, then enter:
-   - **Repository:** `https://github.com/dkk54/ha-aseko-cloud`
-   - **Type / Category:** **Integration**
-
-   Click **Add**. (Or just click the badge above, which fills this in for you.)
-3. **Download:** search **Aseko Cloud** in HACS, open it, and click
-   **Download** (confirm the version when prompted).
-4. **Restart Home Assistant** — *required*. The integration only appears in the
+1. In Home Assistant, open **HACS** in the sidebar (or click the badge above).
+2. Search **Aseko Cloud**, open it, and click **Download** (confirm the version
+   when prompted).
+3. **Restart Home Assistant** — *required*. The integration only appears in the
    **Add Integration** picker after a restart.
-5. Continue with [Add the integration](#4-add-the-integration-in-home-assistant).
+4. Continue with [Add the integration](#3-add-the-integration-in-home-assistant).
 
-### 2. Manual copy
+### 2. Manual install
 
 No HACS required. You need file access to your Home Assistant `config/` folder
 (via Samba, the *File editor* / *Studio Code Server* add-on, SSH, etc.).
 
-1. Download or clone this repository.
+1. Open the [Releases](https://github.com/dkk54/ha-aseko-cloud/releases) page,
+   download the source code ZIP of the latest release and unzip it. (Avoid
+   **Code → Download ZIP** on the repository page: it contains unreleased
+   changes.)
 2. Copy the **`custom_components/aseko_cloud/`** folder into your Home Assistant
    **`config/custom_components/`** directory. The result must be:
    ```
@@ -110,18 +103,9 @@ No HACS required. You need file access to your Home Assistant `config/` folder
    ```
    (Create the `custom_components` folder first if it doesn't exist.)
 3. **Restart Home Assistant.**
-4. Continue with [Add the integration](#4-add-the-integration-in-home-assistant).
+4. Continue with [Add the integration](#3-add-the-integration-in-home-assistant).
 
-### 3. Manual download (ZIP)
-
-If you don't use git:
-
-1. On the repo page, click **Code → Download ZIP** (or grab a release ZIP from
-   the [Releases](https://github.com/dkk54/ha-aseko-cloud/releases) page).
-2. Unzip it and locate the `custom_components/aseko_cloud/` folder inside.
-3. Follow steps 2–4 of [Manual copy](#2-manual-copy) above.
-
-### 4. Add the integration in Home Assistant
+### 3. Add the integration in Home Assistant
 
 Same final steps no matter how you installed:
 
@@ -132,7 +116,7 @@ Same final steps no matter how you installed:
    > ⚠️ Don't pick **"Aseko Pool"** — that's the separate built-in
    > `aseko_pool_live` integration and asks for **email/password**, not an API
    > key.
-3. Paste your [Aseko API key](#5-get-your-aseko-api-key) and submit. Each paired
+3. Paste your [Aseko API key](#4-get-your-aseko-api-key) and submit. Each paired
    pool unit on the account becomes its own device.
 
 > **"Aseko Cloud" doesn't show up in the picker?** Two usual causes:
@@ -140,11 +124,11 @@ Same final steps no matter how you installed:
 > 2. **Stale browser cache** — hard-refresh the page
 >    (**Ctrl/Cmd + Shift + R**) or open Home Assistant in a private window.
 
-### 5. Get your Aseko API key
+### 4. Get your Aseko API key
 
 1. Sign in at <https://account.aseko.cloud/profile/settings/api-keys>.
 2. Create a new API key and **copy it immediately** (it may only be shown once).
-3. Paste it into the integration's setup form (step 4 above).
+3. Paste it into the integration's setup form (step 3 above).
 
 > Keys can expire. Home Assistant raises a repair issue 14 days before the key
 > expires: generate a fresh key at the same URL and enter it via **Settings →

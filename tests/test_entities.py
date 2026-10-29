@@ -38,6 +38,20 @@ async def _repoll(
     await hass.async_block_till_done()
 
 
+def _device(hass: HomeAssistant, serial: str) -> dr.DeviceEntry | None:
+    return next(
+        (
+            device
+            for entry in hass.config_entries.async_entries(DOMAIN)
+            for device in dr.async_entries_for_config_entry(
+                dr.async_get(hass), entry.entry_id
+            )
+            if (DOMAIN, serial) in device.identifiers
+        ),
+        None,
+    )
+
+
 def _entity_id(hass: HomeAssistant, platform: str, unique_id: str) -> str | None:
     return er.async_get(hass).async_get_entity_id(platform, DOMAIN, unique_id)
 
@@ -129,7 +143,7 @@ async def test_device_links_to_aseko_account(
     """Each unit is a device that links to the Aseko account portal."""
     await _setup(hass, aioclient_mock, [unit_payload()])
 
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "SN1")})
+    device = _device(hass, "SN1")
     assert device is not None
     assert device.configuration_url == "https://account.aseko.cloud/"
 
@@ -144,7 +158,7 @@ async def test_unit_paired_later_appears_without_reload(
     await _repoll(hass, aioclient_mock, entry, [unit_payload(), unit_payload("SN2")])
 
     assert _state(hass, "sensor", "SN2_water_temperature") == "25.0"
-    assert dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "SN2")})
+    assert _device(hass, "SN2")
 
 
 async def test_metric_reported_later_appears_without_reload(
@@ -168,13 +182,12 @@ async def test_unpaired_unit_is_removed_and_can_return(
 ) -> None:
     """Unpairing removes the device and entities; re-pairing brings them back."""
     entry = await _setup(hass, aioclient_mock, [unit_payload(), unit_payload("SN2")])
-    device_registry = dr.async_get(hass)
 
     await _repoll(hass, aioclient_mock, entry, [unit_payload()])
 
-    assert device_registry.async_get_device(identifiers={(DOMAIN, "SN2")}) is None
+    assert _device(hass, "SN2") is None
     assert _entity_id(hass, "sensor", "SN2_water_temperature") is None
-    assert device_registry.async_get_device(identifiers={(DOMAIN, "SN1")})
+    assert _device(hass, "SN1")
 
     await _repoll(hass, aioclient_mock, entry, [unit_payload(), unit_payload("SN2")])
 
@@ -194,7 +207,7 @@ async def test_failed_poll_keeps_devices(
     await entry.runtime_data.async_refresh()
     await hass.async_block_till_done()
 
-    assert dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "SN1")})
+    assert _device(hass, "SN1")
     assert _state(hass, "sensor", "SN1_water_temperature") == "unavailable"
 
 

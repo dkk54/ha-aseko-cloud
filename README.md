@@ -29,6 +29,8 @@ Aseko on top of the **public integrator API** at
   with the messages and their detail as attributes), filtration / heating /
   solar / electrolyzer running, non-stop filtration, water filling, water flow
   to probes.
+- **Image**: a photo of the unit, picked by its product family. Units of a
+  family without a photo, or not yet online, have none.
 - Warns through a repair issue 14 days before the API key expires; the key can
   be replaced via **Reconfigure** without removing the integration.
 - Config-entry diagnostics (API key redacted).
@@ -48,6 +50,7 @@ custom_components/aseko_cloud/
   entity.py          Base entity (one device per pool unit)
   sensor.py          Sensors driven by statusValues fields
   binary_sensor.py   Connectivity / problem / running states
+  image.py           Unit photo by product family (photos in images/)
   strings.json       Translation source
   translations/      en, cs
   icons.json         Entity icons
@@ -147,10 +150,15 @@ Same final steps no matter how you installed:
 > expires: generate a fresh key at the same URL and enter it via **Settings →
 > Devices & services → Aseko Cloud → ⋮ → Reconfigure**. If the key has already
 > expired, Home Assistant asks for a new one in a reauthentication prompt.
+>
+> The integration cannot tell which Aseko account a key belongs to, so it
+> accepts a key from a different account too. Its units then replace the
+> current ones: devices of units missing from the new account are removed.
+> To add a second account, add the integration again instead.
 
 ## Open items / roadmap
 
-- [ ] End-to-end test with a real API key (the only thing left to verify).
+- [x] End-to-end test with a real API key.
 - [x] Expose `upcomingFiltrationPeriod` (start / end / non-stop) as a sensor.
 - [x] Config-entry diagnostics + test suite.
 - [ ] Firmware version on the device: the integrator API does not report it.

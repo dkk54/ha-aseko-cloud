@@ -20,7 +20,7 @@ ACCOUNT_URL = "https://account.aseko.cloud/"
 
 # Sent on every request to identify the client (X-Client-Name / X-Client-Version).
 CLIENT_NAME = "home_assistant"
-CLIENT_VERSION = "0.1.2"
+CLIENT_VERSION = "0.2.0"
 
 # The integrator API is poll-only (no push); keep the interval gentle.
 SCAN_INTERVAL = timedelta(minutes=5)

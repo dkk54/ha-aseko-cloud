@@ -101,6 +101,28 @@ async def test_reauth_replaces_the_key(
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reauth_successful"
     assert entry.data[CONF_API_KEY] == "new-key"
+    assert entry.unique_id == _api_key_id("new-key")
+
+
+async def test_reauth_rejects_key_of_another_entry(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """Reauth refuses a key that another entry already uses."""
+    entry = await setup_ok(hass, aioclient_mock)
+    MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_API_KEY: "other-key"},
+        unique_id=_api_key_id("other-key"),
+    ).add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_API_KEY: "other-key"}
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+    assert entry.data[CONF_API_KEY] == "test-key"
 
 
 async def test_reconfigure_replaces_the_key(

@@ -86,8 +86,13 @@ class AsekoCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                 if message:
                     placeholders["error"] = message
             else:
+                entry = self._get_reauth_entry()
+                unique_id = _api_key_id(user_input[CONF_API_KEY])
+                await self.async_set_unique_id(unique_id)
+                if unique_id != entry.unique_id:
+                    self._abort_if_unique_id_configured()
                 return self.async_update_reload_and_abort(
-                    self._get_reauth_entry(), data=user_input
+                    entry, unique_id=unique_id, data=user_input
                 )
         return self.async_show_form(
             step_id="reauth_confirm",

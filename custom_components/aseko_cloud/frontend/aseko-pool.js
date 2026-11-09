@@ -6,11 +6,15 @@
 //   strategy: { type: custom:aseko-pool }
 //
 // Optional: theme (a Home Assistant theme for the views), rotate_seconds (how
-// long the showcase shows each unit, 20 by default).
+// long the showcase shows each unit, 20 by default), unit_images (photos by
+// device model, see unitImage).
 
 const DOMAIN = "aseko_cloud";
-const LOGO_URL = new URL("./aseko-logo.svg", import.meta.url).href;
-const DEFAULT_UNIT_IMAGE = new URL("./unit-asin-aqua.webp", import.meta.url).href;
+// The ?v= of this module carries the integration version, so assets are
+// fetched afresh after an update too.
+const VERSION = new URL(import.meta.url).search;
+const LOGO_URL = new URL(`./aseko-logo.svg${VERSION}`, import.meta.url).href;
+const DEFAULT_UNIT_IMAGE = new URL(`./unit-asin-aqua.webp${VERSION}`, import.meta.url).href;
 const REFRESH_HISTORY_MS = 5 * 60 * 1000;
 
 const TEXTS = {
@@ -42,8 +46,6 @@ const TEXTS = {
     noSchedule: "No schedule reported",
     noData: "No data for this period",
     temperature: "Temperature",
-    chlorine: "Free chlorine",
-    lastSeen: "Updated",
   },
   cs: {
     overview: "Bazény",
@@ -73,8 +75,6 @@ const TEXTS = {
     noSchedule: "Plán filtrace není k dispozici",
     noData: "Za toto období nejsou data",
     temperature: "Teplota",
-    chlorine: "Volný chlor",
-    lastSeen: "Aktualizováno",
   },
 };
 
@@ -98,27 +98,6 @@ const EQUIPMENT = [
 
 // ---------------------------------------------------------------- helpers
 
-let strategyLanguage;
-
-// Home Assistant regenerates a strategy dashboard only when devices or entities
-// change, so the dashboard is rebuilt here when the viewer switches language.
-function watchLanguage() {
-  setInterval(() => {
-    const ha = document.querySelector("home-assistant");
-    const panel = ha?.shadowRoot
-      ?.querySelector("home-assistant-main")
-      ?.shadowRoot?.querySelector("partial-panel-resolver ha-panel-lovelace");
-    const language = ha?.hass?.locale?.language;
-    if (!language || panel?.lovelace?.rawConfig?.strategy?.type !== "custom:aseko-pool") {
-      return;
-    }
-    if (strategyLanguage && language !== strategyLanguage) {
-      strategyLanguage = language;
-      panel.shadowRoot?.querySelector("hui-root")?.dispatchEvent(new CustomEvent("strategy-config-changed", { bubbles: true, composed: true }));
-    }
-  }, 1000);
-}
-
 function texts(hass) {
   const language = (hass?.locale?.language || hass?.language || "en").split("-")[0];
   return TEXTS[language] || TEXTS.en;
@@ -129,6 +108,10 @@ function esc(value) {
     /[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   );
+}
+
+function entityAttr(entityId) {
+  return entityId ? ` data-entity="${esc(entityId)}"` : "";
 }
 
 function unitEntities(hass, deviceId) {
@@ -367,6 +350,11 @@ const WAVES_CSS = `
 
 // Base class: renders when the relevant states change and keeps config handy.
 class AsekoCard extends HTMLElement {
+  // Added from the card picker: show the first Aseko unit.
+  static getStubConfig(hass) {
+    return { device_id: asekoDevices(hass)[0]?.id };
+  }
+
   setConfig(config) {
     if (!config.device_id) {
       throw new Error("device_id is required");
@@ -442,14 +430,14 @@ function heroMarkup(unit, t, { large = false, footer = "", image } = {}) {
           <div class="model">${esc(unit.device?.model || "Aseko")}</div>
           <div class="name">${esc(unit.name)}</div>
         </div>
-        <div class="pill" data-entity="${esc(unit.id("binary_sensor.problem") || "")}">
+        <div class="pill"${entityAttr(unit.id("binary_sensor.problem"))}>
           <ha-icon icon="${STATUS_ICON[overall]}"></ha-icon>${esc(statusText(t, overall))}
         </div>
       </div>
       <div class="main">
-        <div class="temp" data-entity="${esc(unit.id("sensor.water_temperature") || "")}">
-          <span class="value">${formatNumber(unit.hass, temp, 1)}</span><span class="deg">°C</span>
-          <div class="sub">${esc(t.water)}${target !== undefined ? ` · ${esc(t.target)} ${formatNumber(unit.hass, target, 0)} °C` : ""}</div>
+        <div class="temp"${entityAttr(unit.id("sensor.water_temperature"))}>
+          <span class="value">${formatNumber(unit.hass, temp, 1)}</span><span class="deg">${esc(unit.unit("sensor.water_temperature") || "°C")}</span>
+          <div class="sub">${esc(t.water)}${target !== undefined ? ` · ${esc(t.target)} ${formatNumber(unit.hass, target, 0)} ${esc(unit.unit("sensor.water_temperature_required") || "°C")}` : ""}</div>
         </div>
         <div class="side">
           ${temps
@@ -457,13 +445,13 @@ function heroMarkup(unit, t, { large = false, footer = "", image } = {}) {
               ([key, label, icon]) => `
             <div class="mini" data-entity="${esc(unit.id(key))}">
               <ha-icon icon="${icon}"></ha-icon>
-              <span>${esc(label)}</span><b>${formatNumber(unit.hass, unit.number(key), 1)} °C</b>
+              <span>${esc(label)}</span><b>${formatNumber(unit.hass, unit.number(key), 1)} ${esc(unit.unit(key) || "°C")}</b>
             </div>`,
             )
             .join("")}
           ${
             filtrationLine
-              ? `<div class="mini ${f.running || f.nonstop ? "spin" : ""}" data-entity="${esc(unit.id("binary_sensor.filtration") || "")}">
+              ? `<div class="mini ${f.running || f.nonstop ? "spin" : ""}"${entityAttr(unit.id("binary_sensor.filtration"))}>
                   <ha-icon icon="mdi:fan"></ha-icon><span>${esc(t.filtration)}</span><b>${esc(filtrationLine)}</b>
                 </div>`
               : ""
@@ -732,13 +720,30 @@ class AsekoQualityCard extends AsekoCard {
 
 // ---------------------------------------------------------------- filtration + equipment card
 
+// The schedule is in the time of the unit, the same as Home Assistant's, which
+// can differ from the time zone of the browser.
+function minutesNow(hass) {
+  const now = new Date();
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: hass.config?.time_zone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(now);
+    const part = (type) => Number(parts.find((p) => p.type === type)?.value);
+    return part("hour") * 60 + part("minute");
+  } catch (err) {
+    return now.getHours() * 60 + now.getMinutes();
+  }
+}
+
 class AsekoOperationCard extends AsekoCard {
   render(unit, t) {
     const f = unit.filtration();
     const start = minutes(f.start);
     const end = minutes(f.end);
-    const now = new Date();
-    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const nowMin = minutesNow(unit.hass);
     const pct = (m) => (m / 1440) * 100;
     let windows = [];
     if (f.nonstop) {
@@ -785,7 +790,7 @@ class AsekoOperationCard extends AsekoCard {
       </style>
       <ha-card>
         <div class="title">${esc(t.filtration)}</div>
-        <div class="status ${f.running || f.nonstop ? "on" : ""}" data-entity="${esc(unit.id("binary_sensor.filtration") || "")}">
+        <div class="status ${f.running || f.nonstop ? "on" : ""}"${entityAttr(unit.id("binary_sensor.filtration"))}>
           <ha-icon icon="mdi:fan"></ha-icon>${esc(status)}
           ${f.speed ? `<span class="speed">${esc(unit.label("sensor.filtration_speed"))}: ${esc(f.speed)}</span>` : ""}
         </div>
@@ -905,6 +910,9 @@ class AsekoHistoryCard extends AsekoCard {
 
   connectedCallback() {
     this._timer = setInterval(() => this._load(true), REFRESH_HISTORY_MS);
+    if (this._hass) {
+      this._load(true);
+    }
   }
 
   disconnectedCallback() {
@@ -912,7 +920,6 @@ class AsekoHistoryCard extends AsekoCard {
   }
 
   set hass(hass) {
-    const first = !this._hass;
     this._hass = hass;
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
@@ -922,7 +929,8 @@ class AsekoHistoryCard extends AsekoCard {
     if (!this._selected || !series.find((s) => s.key === this._selected)) {
       this._selected = series[0]?.key;
     }
-    if (first) {
+    // Loaded again when the unit gains or loses a series, e.g. right after pairing.
+    if (series.map((s) => unit.id(s.entity)).join() !== this._loadedIds) {
       this._load(false);
     }
     const signature = `${this._selected}|${unit.signature()}|${this._loadedAt || ""}`;
@@ -948,7 +956,9 @@ class AsekoHistoryCard extends AsekoCard {
     this._loading = true;
     const unit = new Unit(this._hass, this._config.device_id);
     const ids = this._series(unit).map((s) => unit.id(s.entity));
+    this._loadedIds = ids.join();
     if (!ids.length) {
+      this._loading = false;
       return;
     }
     const end = new Date();
@@ -1132,7 +1142,8 @@ class AsekoShowcaseCard extends HTMLElement {
 
   _startTimer() {
     clearInterval(this._timer);
-    this._timer = setInterval(() => this._next(), this._config.rotate_seconds * 1000);
+    const seconds = Math.max(5, Number(this._config.rotate_seconds) || 20);
+    this._timer = setInterval(() => this._next(), seconds * 1000);
   }
 
   _next() {
@@ -1215,6 +1226,7 @@ class AsekoShowcaseCard extends HTMLElement {
         .dots span { padding: 6px 4px; cursor: pointer; }
         .dots i { display: block; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--primary-text-color) 25%, transparent); transition: all .3s; }
         .dots i.on { width: 26px; border-radius: 999px; background: var(--aseko-blue); }
+        .kiosk .clock { cursor: pointer; }
         .brand { display: flex; align-items: center; justify-content: flex-end; font-size: 13px; color: var(--secondary-text-color);
           letter-spacing: .12em; text-transform: uppercase; }
 
@@ -1248,6 +1260,12 @@ class AsekoShowcaseCard extends HTMLElement {
     if (kioskWanted()) {
       this.shadowRoot.querySelector(".stage").classList.add("kiosk");
       this.shadowRoot.querySelector(".idle-host").classList.add("kiosk");
+      // Without the header, tapping the clock is the way back.
+      this.shadowRoot.addEventListener("click", (ev) => {
+        if (ev.target.closest?.(".clock")) {
+          navigate("overview");
+        }
+      });
     }
     this._bindGestures();
   }
@@ -1334,12 +1352,15 @@ class AsekoShowcaseCard extends HTMLElement {
 }
 
 // Hides the HA header and sidebar while the showcase is open, for a wall
-// display: with ?kiosk in the URL, or always in the Home Assistant app on a
-// tablet. Leaving the showcase brings them back; nothing is persisted.
+// display: with ?kiosk in the URL, or in the Home Assistant app on a tablet.
+// Leaving the showcase brings them back; nothing is persisted.
 const KIOSK_ID = "aseko-kiosk";
+let kioskActive = false;
 
 function kioskWanted() {
-  return new URLSearchParams(window.location.search).has("kiosk") || /Home ?Assistant\//i.test(navigator.userAgent);
+  const app = /Home ?Assistant\//i.test(navigator.userAgent);
+  const tablet = Math.min(window.screen.width, window.screen.height) >= 600;
+  return new URLSearchParams(window.location.search).has("kiosk") || (app && tablet);
 }
 
 function kioskRoots() {
@@ -1361,17 +1382,27 @@ function applyKiosk() {
     }
   };
   const attempt = (tries) => {
+    if (!kioskActive) {
+      return;
+    }
     const { drawer, root } = kioskRoots();
-    css(drawer, ".sidebar-shell { display: none !important; } .app-content { padding-inline-start: 0 !important; padding-left: 0 !important; }");
+    // .sidebar-shell and .app-content since Home Assistant 2026.6, .mdc-drawer before.
+    css(
+      drawer,
+      `.sidebar-shell, .mdc-drawer { display: none !important; }
+       .app-content, .mdc-drawer-app-content { padding-inline-start: 0 !important; padding-left: 0 !important; margin-inline-start: 0 !important; margin-left: 0 !important; }`,
+    );
     css(root, ".header { display: none !important; } #view { padding-top: 0 !important; min-height: 100vh !important; }");
     if ((!drawer || !root) && tries > 0) {
       setTimeout(() => attempt(tries - 1), 300);
     }
   };
+  kioskActive = true;
   attempt(20);
 }
 
 function removeKiosk() {
+  kioskActive = false;
   const { drawer, root } = kioskRoots();
   drawer?.getElementById(KIOSK_ID)?.remove();
   root?.getElementById(KIOSK_ID)?.remove();
@@ -1385,7 +1416,6 @@ function strategySection(cards, span = 2) {
 
 class AsekoPoolDashboardStrategy extends HTMLElement {
   static async generate(config, hass) {
-    strategyLanguage = hass.locale?.language;
     const t = texts(hass);
     const devices = asekoDevices(hass);
     const theme = config.theme;
@@ -1452,8 +1482,6 @@ for (const [tag, element] of Object.entries(ELEMENTS)) {
     customElements.define(tag, element);
   }
 }
-
-watchLanguage();
 
 window.customCards = window.customCards || [];
 for (const [type, name] of [

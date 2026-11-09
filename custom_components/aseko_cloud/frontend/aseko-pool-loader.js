@@ -13,6 +13,17 @@ if (!customElements.get("ll-strategy-dashboard-aseko-pool")) {
         const { AsekoPoolDashboardStrategy } = await dashboard;
         return AsekoPoolDashboardStrategy.generate(config, hass);
       }
+
+      // Rebuilt for new devices and entities, and for another language, which
+      // names the views. Home Assistant before 2026.6 does not ask and rebuilds
+      // on registry changes only.
+      static shouldRegenerate(config, oldHass, newHass) {
+        return (
+          oldHass.entities !== newHass.entities ||
+          oldHass.devices !== newHass.devices ||
+          oldHass.locale?.language !== newHass.locale?.language
+        );
+      }
     },
   );
 }
@@ -29,28 +40,22 @@ if (!window.customStrategies.some((strategy) => strategy.type === "aseko-pool"))
   });
 }
 
-// If this file still arrived too late, Home Assistant shows a timeout error and
-// never retries, so the page is reloaded once to recover.
-const RELOAD_KEY = "aseko-pool-reloaded-at";
+// If this file still arrived too late, Home Assistant shows an error view and
+// does not try again on its own, so it is asked to reload the dashboard once.
 const recover = setInterval(() => {
   const panel = document
     .querySelector("home-assistant")
     ?.shadowRoot?.querySelector("home-assistant-main")
     ?.shadowRoot?.querySelector("partial-panel-resolver ha-panel-lovelace");
-  const error = panel?.shadowRoot?.querySelector("hass-error-screen")?.error || "";
-  if (!error.includes("ll-strategy-dashboard-aseko-pool")) {
+  const failed = panel?.lovelace?.config?.views?.[0]?.cards?.some((card) =>
+    String(card.content ?? "").includes("ll-strategy-dashboard-aseko-pool"),
+  );
+  if (!failed) {
     return;
   }
   clearInterval(recover);
-  let last = 0;
-  try {
-    last = Number(sessionStorage.getItem(RELOAD_KEY)) || 0;
-    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
-  } catch (err) {
-    return;
-  }
-  if (Date.now() - last > 60 * 1000) {
-    window.location.reload();
-  }
+  panel.shadowRoot
+    ?.querySelector("hui-root")
+    ?.dispatchEvent(new Event("config-refresh", { bubbles: true, composed: true }));
 }, 1000);
 setTimeout(() => clearInterval(recover), 30 * 1000);

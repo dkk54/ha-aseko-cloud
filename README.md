@@ -109,7 +109,7 @@ Same final steps no matter how you installed:
 1. Go to **Settings → Devices & services → Add integration**.
 2. Search **Aseko Cloud** and select it. It carries the *custom integration*
    badge and asks for an **API key**.
-   > ⚠️ Don't pick **"Aseko Pool"** — that's the separate built-in
+   > ⚠️ Don't pick **"Aseko Pool Live"** — that's the separate built-in
    > `aseko_pool_live` integration and asks for **email/password**, not an API
    > key.
 3. Paste your [Aseko API key](#4-get-your-aseko-api-key) and submit. Each paired

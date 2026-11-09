@@ -26,8 +26,13 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
 from . import AsekoCloudConfigEntry
+from .api import AsekoUnit
+from .const import LOGGER
 from .coordinator import AsekoCloudCoordinator
-from .entity import AsekoCloudEntity
+from .entity import AsekoCloudEntity, async_add_unit_entities
+
+# Read-only, coordinator-driven: no per-entity update calls to throttle.
+PARALLEL_UPDATES = 0
 
 _DIAGNOSTIC = EntityCategory.DIAGNOSTIC
 
@@ -37,6 +42,8 @@ class AsekoSensorDescription(SensorEntityDescription):
     """Describes a sensor backed by a ``statusValues`` field."""
 
     api_field: str
+    # Key inside ``api_field`` when the field is an object, not a plain value.
+    value_key: str | None = None
     # Field holding this sensor's unit string, when the API reports it.
     unit_field: str | None = None
     # True for enum sensors; the raw value is lower-cased to match ``options``.
@@ -69,6 +76,20 @@ def _enum(key: str, api_field: str, options: list[str]) -> AsekoSensorDescriptio
         is_enum=True,
         device_class=SensorDeviceClass.ENUM,
         options=options,
+    )
+
+
+def _filtration_period(key: str, value_key: str) -> AsekoSensorDescription:
+    """Build a sensor for the start or end (``HH:MM``) of the filtration period.
+
+    The period is the one currently running, or the next one when filtration
+    is idle. Non-stop filtration has no start or end, so the value is unknown.
+    """
+    return AsekoSensorDescription(
+        key=key,
+        translation_key=key,
+        api_field="upcomingFiltrationPeriod",
+        value_key=value_key,
     )
 
 
@@ -183,6 +204,8 @@ SENSORS: tuple[AsekoSensorDescription, ...] = (
         "electrolyzerDirection",
         ["left", "right", "waiting"],
     ),
+    _filtration_period("filtration_period_start", "start"),
+    _filtration_period("filtration_period_end", "end"),
 )
 
 
@@ -192,13 +215,19 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Aseko Cloud sensors from a config entry."""
-    coordinator = entry.runtime_data
-    async_add_entities(
-        AsekoCloudSensor(coordinator, serial, description)
-        for serial, unit in coordinator.data.items()
-        for description in SENSORS
-        if description.api_field in unit.status_values
+    async_add_unit_entities(
+        entry,
+        entry.runtime_data,
+        async_add_entities,
+        SENSORS,
+        _reports_field,
+        AsekoCloudSensor,
     )
+
+
+def _reports_field(description: AsekoSensorDescription, unit: AsekoUnit) -> bool:
+    """Return True when the unit reports the field backing the sensor."""
+    return description.api_field in unit.status_values
 
 
 class AsekoCloudSensor(AsekoCloudEntity, SensorEntity):
@@ -220,18 +249,29 @@ class AsekoCloudSensor(AsekoCloudEntity, SensorEntity):
     @property
     def native_value(self) -> StateType:
         """Return the current sensor value."""
-        value = self.unit.status_values.get(self.entity_description.api_field)
+        description = self.entity_description
+        value = self.unit.status_values.get(description.api_field)
+        if description.value_key is not None:
+            if not isinstance(value, dict):
+                return None
+            value = value.get(description.value_key)
         if value is None:
             return None
-        if self.entity_description.is_enum:
-            return str(value).lower()
+        if description.is_enum:
+            option = str(value).lower()
+            if option not in (description.options or ()):
+                # A value added to the API after this release; report it as
+                # unknown instead of letting Home Assistant log an error.
+                LOGGER.debug("Unknown %s value from Aseko: %s", description.key, value)
+                return None
+            return option
         return value
 
     @property
     def native_unit_of_measurement(self) -> str | None:
         """Return the unit, preferring an API-reported unit when available."""
         description = self.entity_description
-        if description.unit_field:
+        if description.unit_field and self.available:
             reported = self.unit.status_values.get(description.unit_field)
             if reported:
                 return reported

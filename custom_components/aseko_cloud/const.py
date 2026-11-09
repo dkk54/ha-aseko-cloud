@@ -20,9 +20,14 @@ ACCOUNT_URL = "https://account.aseko.cloud/"
 
 # Sent on every request to identify the client (X-Client-Name / X-Client-Version).
 CLIENT_NAME = "home_assistant"
-CLIENT_VERSION = "0.1.1"
+CLIENT_VERSION = "0.2.0"
 
 # The integrator API is poll-only (no push); keep the interval gentle.
 SCAN_INTERVAL = timedelta(minutes=5)
+
+# The key's expiry date rarely changes, so /auth/check runs far less often than
+# the unit poll. Users are warned this long before the key expires.
+AUTH_CHECK_INTERVAL = timedelta(hours=12)
+KEY_EXPIRY_WARNING = timedelta(days=14)
 
 MANUFACTURER = "Aseko"

@@ -18,7 +18,10 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from . import AsekoCloudConfigEntry
 from .api import AsekoUnit
 from .coordinator import AsekoCloudCoordinator
-from .entity import AsekoCloudEntity
+from .entity import AsekoCloudEntity, async_add_unit_entities
+
+# Read-only, coordinator-driven: no per-entity update calls to throttle.
+PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -40,6 +43,12 @@ def _has_status_value(field: str) -> Callable[[AsekoUnit], bool]:
     return lambda unit: field in unit.status_values
 
 
+def _filtration_nonstop(unit: AsekoUnit) -> bool | None:
+    """Return True when the unit is set to filter non-stop."""
+    period = unit.status_values.get("upcomingFiltrationPeriod")
+    return period.get("isNonstop") if isinstance(period, dict) else None
+
+
 def _alarm_attributes(unit: AsekoUnit) -> dict[str, Any] | None:
     """Expose the active status messages as attributes of the problem sensor."""
     if not unit.status_messages:
@@ -50,6 +59,7 @@ def _alarm_attributes(unit: AsekoUnit) -> dict[str, Any] | None:
                 "type": m.get("type"),
                 "severity": m.get("severity"),
                 "message": m.get("message"),
+                "detail": m.get("detail"),
             }
             for m in unit.status_messages
         ]
@@ -77,6 +87,12 @@ BINARY_SENSORS: tuple[AsekoBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.RUNNING,
         value_fn=_status_value("filtrationRunning"),
         exists_fn=_has_status_value("filtrationRunning"),
+    ),
+    AsekoBinarySensorDescription(
+        key="filtration_nonstop",
+        translation_key="filtration_nonstop",
+        value_fn=_filtration_nonstop,
+        exists_fn=_has_status_value("upcomingFiltrationPeriod"),
     ),
     AsekoBinarySensorDescription(
         key="heating",
@@ -121,12 +137,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Aseko Cloud binary sensors from a config entry."""
-    coordinator = entry.runtime_data
-    async_add_entities(
-        AsekoCloudBinarySensor(coordinator, serial, description)
-        for serial, unit in coordinator.data.items()
-        for description in BINARY_SENSORS
-        if description.exists_fn(unit)
+    async_add_unit_entities(
+        entry,
+        entry.runtime_data,
+        async_add_entities,
+        BINARY_SENSORS,
+        lambda description, unit: description.exists_fn(unit),
+        AsekoCloudBinarySensor,
     )
 
 

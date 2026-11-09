@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Any
 
@@ -18,6 +19,8 @@ from .const import API_BASE_URL, CLIENT_NAME, CLIENT_VERSION
 
 REQUEST_TIMEOUT = 15
 PAGE_SIZE = 50
+# Unit details are fetched concurrently, but never more than this many at once.
+MAX_CONCURRENT_REQUESTS = 5
 
 
 class AsekoCloudError(Exception):
@@ -59,6 +62,14 @@ class AsekoAccessBlockedError(AsekoCloudError):
 
 
 @dataclass
+class AsekoAuthCheck:
+    """The result of ``/auth/check`` for a valid API key."""
+
+    # None when the key is configured to never expire.
+    expires_at: datetime | None = None
+
+
+@dataclass
 class AsekoUnit:
     """An Aseko pool unit returned by ``/paired-units/{serialNumber}``."""
 
@@ -67,6 +78,7 @@ class AsekoUnit:
     online: bool
     note: str | None = None
     brand: str | None = None
+    brand_secondary: str | None = None
     # Raw ``statusValues`` object. Fields are already clean and typed; a missing
     # key means the metric is unsupported by this unit.
     status_values: dict[str, Any] = field(default_factory=dict)
@@ -90,16 +102,23 @@ class AsekoCloudApi:
         """Initialise the client with an API key."""
         self._session = session
         self._api_key = api_key
-        self._language = language
+        # Sent as Accept-Language; the backend localises status messages by it.
+        self.language = language
+        self._semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
-    async def async_check(self) -> None:
+    async def async_check(self) -> AsekoAuthCheck:
         """Validate the API key. Raises :class:`AsekoAuthError` if invalid."""
         data = await self._get("/auth/check")
         if not data.get("valid"):
             raise AsekoAuthError("The API key is not valid")
+        return AsekoAuthCheck(expires_at=_parse_datetime(data.get("expiresAt")))
 
     async def async_get_units(self) -> dict[str, AsekoUnit]:
-        """Return every paired unit (with detail), keyed by serial number."""
+        """Return every paired unit (with detail), keyed by serial number.
+
+        The collection endpoint does not include ``statusValues``, so each unit
+        needs its own detail request; those run concurrently.
+        """
         units: dict[str, AsekoUnit] = {}
         page = 1
         while True:
@@ -107,10 +126,9 @@ class AsekoCloudApi:
                 "/paired-units", params={"page": page, "limit": PAGE_SIZE}
             )
             items = collection.get("items") or []
-            for item in items:
-                serial = item.get("serialNumber")
-                if serial:
-                    units[serial] = await self.async_get_unit(serial)
+            serials = [s for item in items if (s := item.get("serialNumber"))]
+            details = await asyncio.gather(*map(self.async_get_unit, serials))
+            units.update(zip(serials, details, strict=True))
             total = collection.get("totalItems", len(units))
             if not items or len(units) >= total:
                 return units
@@ -118,8 +136,9 @@ class AsekoCloudApi:
 
     async def async_get_unit(self, serial_number: str) -> AsekoUnit:
         """Return the full detail for a single unit."""
-        data = await self._get(f"/paired-units/{serial_number}")
-        return _parse_unit(data)
+        async with self._semaphore:
+            data = await self._get(f"/paired-units/{serial_number}")
+        return _parse_unit(data, serial_number)
 
     async def _get(
         self, path: str, params: dict[str, Any] | None = None
@@ -129,7 +148,7 @@ class AsekoCloudApi:
             "Authorization": f"Bearer {self._api_key}",
             "X-Client-Name": CLIENT_NAME,
             "X-Client-Version": CLIENT_VERSION,
-            "Accept-Language": self._language,
+            "Accept-Language": self.language,
         }
         try:
             async with asyncio.timeout(REQUEST_TIMEOUT):
@@ -183,9 +202,20 @@ async def _access_blocked_error(
     return message, error_type
 
 
-def _parse_unit(data: dict[str, Any]) -> AsekoUnit:
+def _parse_datetime(value: Any) -> datetime | None:
+    """Parse an ISO 8601 timestamp from the API; naive values are UTC."""
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _parse_unit(data: dict[str, Any], serial_number: str) -> AsekoUnit:
     """Map a raw ``PairedUnit`` payload onto an AsekoUnit."""
-    serial = data["serialNumber"]
+    serial = data.get("serialNumber") or serial_number
     brand = data.get("brandName") or {}
     return AsekoUnit(
         serial_number=serial,
@@ -193,6 +223,7 @@ def _parse_unit(data: dict[str, Any]) -> AsekoUnit:
         online=data.get("online", False),
         note=data.get("note"),
         brand=brand.get("primary"),
+        brand_secondary=brand.get("secondary"),
         status_values=data.get("statusValues") or {},
         status_messages=data.get("statusMessages") or [],
     )

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components.repairs import RepairsFlow
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 
@@ -44,13 +45,20 @@ class AccessBlockedRepairFlow(RepairsFlow):
                 if self._entry_id
                 else None
             )
-            coordinator = getattr(entry, "runtime_data", None)
-            if coordinator is not None:
+            if entry is None:
+                return self.async_create_entry(title="", data={})
+            if entry.state is ConfigEntryState.LOADED:
                 # async_refresh (not async_request_refresh) so we can inspect
                 # the outcome synchronously: it awaits the poll to completion.
-                await coordinator.async_refresh()
-                if not coordinator.last_update_success:
-                    return self.async_abort(reason="still_blocked")
+                await entry.runtime_data.async_refresh()
+                resolved = entry.runtime_data.last_update_success
+            else:
+                # Blocked since setup: the entry is waiting for a retry, so
+                # retry now instead of waiting for the next attempt.
+                await self.hass.config_entries.async_reload(entry.entry_id)
+                resolved = entry.state is ConfigEntryState.LOADED
+            if not resolved:
+                return self.async_abort(reason="still_blocked")
             return self.async_create_entry(title="", data={})
         return self.async_show_form(
             step_id="confirm",

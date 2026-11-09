@@ -10,6 +10,11 @@
         "title": "Re-authenticate with Aseko",
         "description": "Your Aseko API key is no longer valid. Generate a new one at {url}.",
         "data": { "api_key": "API key" }
+      },
+      "reconfigure": {
+        "title": "Change API key",
+        "description": "Create a new API key at {url} and paste it below. The integration keeps its devices and entities.",
+        "data": { "api_key": "API key" }
       }
     },
     "error": {
@@ -20,10 +25,15 @@
     },
     "abort": {
       "already_configured": "This API key is already configured",
-      "reauth_successful": "Re-authentication was successful"
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "The API key was changed"
     }
   },
   "issues": {
+    "api_key_expiring": {
+      "title": "Aseko API key expires soon",
+      "description": "Your Aseko API key expires on {expires}. Create a new key at {url} and enter it under **Settings → Devices & services → Aseko Cloud → Reconfigure**, otherwise the integration stops updating."
+    },
     "access_blocked": {
       "title": "Aseko: {error}",
       "fix_flow": {
@@ -38,6 +48,11 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "access_blocked": { "message": "{error}" },
+    "invalid_auth": { "message": "Aseko rejected the API key" },
+    "cannot_connect": { "message": "Failed to connect to Aseko: {error}" }
   },
   "entity": {
     "sensor": {
@@ -98,17 +113,23 @@
           "right": "Right",
           "waiting": "Waiting"
         }
-      }
+      },
+      "filtration_period_start": { "name": "Filtration start" },
+      "filtration_period_end": { "name": "Filtration end" }
     },
     "binary_sensor": {
       "online": { "name": "Connectivity" },
       "problem": { "name": "Problem" },
       "filtration": { "name": "Filtration" },
+      "filtration_nonstop": { "name": "Non-stop filtration" },
       "heating": { "name": "Heating" },
       "solar": { "name": "Solar" },
       "electrolyzer": { "name": "Electrolyzer" },
       "water_filling": { "name": "Water filling" },
       "water_flow_to_probes": { "name": "Water flow to probes" }
+    },
+    "image": {
+      "photo": { "name": "Photo" }
     }
   }
 }

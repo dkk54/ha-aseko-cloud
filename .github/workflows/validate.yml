@@ -24,3 +24,26 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
+
+  tests:
+    name: Tests (Home Assistant ${{ matrix.home-assistant }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The oldest release hacs.json allows; keep the two in step.
+          - home-assistant: "2025.3"
+            python: "3.13"
+            constraint: "==0.13.225"
+          # Whatever is current, to catch upstream changes before users do.
+          - home-assistant: latest
+            python: "3.14"
+            constraint: ""
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install "pytest-homeassistant-custom-component${{ matrix.constraint }}"
+      - run: pytest

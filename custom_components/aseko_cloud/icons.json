@@ -13,9 +13,12 @@
       "filtration_speed": { "default": "mdi:speedometer" },
       "pool_flow": { "default": "mdi:swap-vertical" },
       "water_level_state": { "default": "mdi:waves-arrow-up" },
-      "electrolyzer_direction": { "default": "mdi:swap-horizontal" }
+      "electrolyzer_direction": { "default": "mdi:swap-horizontal" },
+      "filtration_period_start": { "default": "mdi:clock-start" },
+      "filtration_period_end": { "default": "mdi:clock-end" }
     },
     "binary_sensor": {
+      "filtration_nonstop": { "default": "mdi:autorenew" },
       "heating": { "default": "mdi:radiator" },
       "solar": { "default": "mdi:solar-power" },
       "electrolyzer": { "default": "mdi:flash-outline" },

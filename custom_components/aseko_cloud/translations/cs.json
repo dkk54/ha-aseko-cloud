@@ -10,6 +10,11 @@
         "title": "Opětovné ověření u Aseko",
         "description": "Váš API klíč Aseko již není platný. Vytvořte si nový na {url}.",
         "data": { "api_key": "API klíč" }
+      },
+      "reconfigure": {
+        "title": "Změna API klíče",
+        "description": "Vytvořte si nový API klíč na {url} a vložte jej níže. Zařízení a entity integrace zůstanou zachované.",
+        "data": { "api_key": "API klíč" }
       }
     },
     "error": {
@@ -20,10 +25,15 @@
     },
     "abort": {
       "already_configured": "Tento API klíč je již nakonfigurován",
-      "reauth_successful": "Opětovné ověření proběhlo úspěšně"
+      "reauth_successful": "Opětovné ověření proběhlo úspěšně",
+      "reconfigure_successful": "API klíč byl změněn"
     }
   },
   "issues": {
+    "api_key_expiring": {
+      "title": "Platnost API klíče Aseko brzy vyprší",
+      "description": "Platnost vašeho API klíče Aseko vyprší {expires}. Vytvořte si nový klíč na {url} a zadejte ho v **Nastavení → Zařízení a služby → Aseko Cloud**, v nabídce ⋮ integrace, jinak se integrace přestane aktualizovat."
+    },
     "access_blocked": {
       "title": "Aseko: {error}",
       "fix_flow": {
@@ -38,6 +48,11 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "access_blocked": { "message": "{error}" },
+    "invalid_auth": { "message": "Aseko odmítlo API klíč" },
+    "cannot_connect": { "message": "Připojení k Aseko se nezdařilo: {error}" }
   },
   "entity": {
     "sensor": {
@@ -98,17 +113,23 @@
           "right": "Vpravo",
           "waiting": "Čekání"
         }
-      }
+      },
+      "filtration_period_start": { "name": "Začátek filtrace" },
+      "filtration_period_end": { "name": "Konec filtrace" }
     },
     "binary_sensor": {
       "online": { "name": "Připojení" },
       "problem": { "name": "Problém" },
       "filtration": { "name": "Filtrace" },
+      "filtration_nonstop": { "name": "Filtrace nonstop" },
       "heating": { "name": "Ohřev" },
       "solar": { "name": "Solár" },
       "electrolyzer": { "name": "Elektrolyzér" },
       "water_filling": { "name": "Napouštění vody" },
       "water_flow_to_probes": { "name": "Průtok vody k sondám" }
+    },
+    "image": {
+      "photo": { "name": "Fotka" }
     }
   }
 }

@@ -19,7 +19,7 @@ body:
     attributes:
       label: Aseko Cloud version
       description: From HACS, or `manifest.json` `version`.
-      placeholder: "0.1.0"
+      placeholder: "0.2.0"
     validations:
       required: true
   - type: input
@@ -45,5 +45,5 @@ body:
     attributes:
       label: Diagnostics (optional)
       description: |
-        Settings → Devices & Services → Aseko Cloud → ⋮ → Download diagnostics.
+        Settings → Devices & services → Aseko Cloud → ⋮ → Download diagnostics.
         Paste or attach the JSON here.

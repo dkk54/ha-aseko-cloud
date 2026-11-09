@@ -33,22 +33,44 @@ def auto_enable_custom_integrations(enable_custom_integrations):
     yield
 
 
-def mock_units_ok(aioclient_mock: AiohttpClientMocker) -> None:
-    """Register a successful paired-units listing plus one unit's detail."""
+def unit_payload(serial: str = "SN1", **overrides: object) -> dict:
+    """Build a ``PairedUnit`` detail payload."""
+    payload = {
+        "serialNumber": serial,
+        "name": "Pool",
+        "online": True,
+        "statusValues": {"waterTemperature": 25.0},
+        "statusMessages": [],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def mock_units(
+    aioclient_mock: AiohttpClientMocker,
+    units: list[dict],
+    expires_at: str | None = None,
+) -> None:
+    """Register a valid key check, the paired-units listing and every detail."""
+    aioclient_mock.get(
+        f"{API_BASE_URL}/auth/check", json={"valid": True, "expiresAt": expires_at}
+    )
     aioclient_mock.get(
         f"{API_BASE_URL}/paired-units",
-        json={"items": [{"serialNumber": "SN1"}], "totalItems": 1},
-    )
-    aioclient_mock.get(
-        f"{API_BASE_URL}/paired-units/SN1",
         json={
-            "serialNumber": "SN1",
-            "name": "Pool",
-            "online": True,
-            "statusValues": {"waterTemperature": 25.0},
-            "statusMessages": [],
+            "items": [{"serialNumber": unit["serialNumber"]} for unit in units],
+            "totalItems": len(units),
         },
     )
+    for unit in units:
+        aioclient_mock.get(
+            f"{API_BASE_URL}/paired-units/{unit['serialNumber']}", json=unit
+        )
+
+
+def mock_units_ok(aioclient_mock: AiohttpClientMocker) -> None:
+    """Register a successful paired-units listing plus one unit's detail."""
+    mock_units(aioclient_mock, [unit_payload()])
 
 
 def mock_blocked(aioclient_mock: AiohttpClientMocker, body: dict) -> None:

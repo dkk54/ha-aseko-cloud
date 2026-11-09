@@ -149,12 +149,48 @@ strategy:
   type: custom:aseko-pool
 ```
 
-Units paired later appear on the dashboard on their own.
+Units paired later appear on the dashboard on their own. The texts follow the
+language of your Home Assistant profile (English and Czech; other languages
+fall back to English).
 
-Optional settings under `strategy`: `theme` (a Home Assistant theme for the
-dashboard) and `rotate_seconds` (how long the showcase shows each unit,
-20 by default). The texts follow the Home Assistant language (English and
-Czech; other languages fall back to English).
+The dashboard has these views:
+
+- **Pools:** a card for every unit. Tap a card to open the unit.
+- **A view per unit:** water quality against the target values, the
+  filtration schedule for today, equipment, messages and a 48-hour history.
+- **Showcase:** one unit at a time in full screen, for a wall tablet or TV.
+  Units take turns every 20 seconds; swipe or tap the dots to switch. Offline
+  units are skipped unless all of them are offline.
+
+### Showcase on a wall tablet or TV
+
+To hide the Home Assistant header and sidebar, add `?kiosk` to the address of
+the showcase, for example `http://homeassistant.local:8123/pool/showcase?kiosk`.
+In the Home Assistant app on a tablet this happens on its own. The showcase
+then scales itself to fit the screen. Tap the clock in the top right corner to
+get back to the dashboard.
+
+### Options
+
+Optional settings under `strategy` in the raw configuration editor:
+
+```yaml
+strategy:
+  type: custom:aseko-pool
+  theme: my-theme        # a Home Assistant theme for the dashboard
+  rotate_seconds: 30     # how long the showcase shows each unit, 20 by default
+  unit_images:           # your own photos instead of the built-in ones
+    ASIN AQUA: /local/my-pool-unit.png
+    default: /local/my-pool-unit.png   # shown while there is no unit yet
+```
+
+`unit_images` is keyed by the device model as shown on the device page.
+
+### Cards
+
+The cards of the dashboard can also be used on your own dashboards: **Edit
+dashboard → Add card** and search for *Aseko*. Each card shows one unit, picked
+in the card's YAML by `device_id`.
 
 ## Entities
 
